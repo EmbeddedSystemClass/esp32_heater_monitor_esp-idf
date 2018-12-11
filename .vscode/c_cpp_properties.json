@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceRoot}",
+                "/home/xero/esp32/xtensa-esp32-elf/lib/gcc/xtensa-esp32-elf/5.2.0/include/**",
+                "/home/xero/esp32/xtensa-esp32-elf/lib/gcc/xtensa-esp32-elf/5.2.0/include-fixed/**",
+                "/home/xero/esp32/xtensa-esp32-elf/xtensa-esp32-elf/include/**",
+                "/home/xero/esp32/xtensa-esp32-elf/xtensa-esp32-elf/sysroot/usr/include/**",
+                "/home/xero/esp32/esp/esp-idf/components/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
