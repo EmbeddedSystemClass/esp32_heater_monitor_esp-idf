@@ -2,6 +2,34 @@
 #include "pin_definitions.h"
 #include "driver/spi_slave.h"
 #include <string.h>
+#include "spi_message.h"
+
+/*
+struct SPIMessage
+{
+   uint8_t raw[16];
+} xSPIMessage;
+
+QueueHandle_t xSPIQueue;
+*/
+
+uint8_t spi_packet[SPI_BUFFER_SIZE*2];
+
+bool is_changed(uint8_t array1[], uint8_t array2[]){
+    for (int i = 0; i<SPI_BUFFER_SIZE; i++){
+        if(spi_packet[i] != array1[i] && spi_packet[i+8] != array2[i]){
+            return true;
+        }
+    }
+    return false;
+}
+
+void combine(uint8_t array1[], uint8_t array2[]){
+    for(int i = 0; i<SPI_BUFFER_SIZE; i++){
+        spi_packet[i] = array1[i];
+        spi_packet[i+8] = array2[i];
+    }
+}
 
 
 //Main application
@@ -60,27 +88,41 @@ void spi_read(void * pvParameter)
     ret=spi_slave_initialize(VSPI_HOST, &buscfg2, &slvcfg2, 2);
     assert(ret==ESP_OK);
 
-    uint32_t recvbuf1[SPI_BUFFER_SIZE]={};
+    memset(xSPIMessage.raw, 0, SPI_BUFFER_SIZE*2);
+    memset(spi_packet, 0, SPI_BUFFER_SIZE*2);
+
+
+    uint8_t recvbuf1[SPI_BUFFER_SIZE]={};
     memset(recvbuf1, 0, SPI_BUFFER_SIZE);
     spi_slave_transaction_t t1;
     memset(&t1, 0, sizeof(t1));
 
-    uint32_t recvbuf2[SPI_BUFFER_SIZE]={};
+    uint8_t recvbuf2[SPI_BUFFER_SIZE]={};
     memset(recvbuf2, 0, SPI_BUFFER_SIZE);
     spi_slave_transaction_t t2;
     memset(&t2, 0, sizeof(t2));
+
+    struct SPIMessage *pxMessage;
+
+    // Create a queue capable of containing 10 pointers to AMessage structures.
+    // These should be passed by pointer as they contain a lot of data.
+    xSPIQueue = xQueueCreate( 10, sizeof( struct AMessage * ) );
+    if( xSPIQueue == 0 )
+    {
+        // Failed to create the queue.
+    }
 
     while(1) {
         //Clear receive buffer, set send buffer to something sane
         memset(recvbuf1, 0, SPI_BUFFER_SIZE);
         memset(recvbuf2, 0, SPI_BUFFER_SIZE);
 
-        //Set up a transaction of 128 bytes to send/receive
-        t1.length=SPI_BUFFER_SIZE << 3;
+        //Set up a transaction of 128 spi_packet to send/receive
+        t1.length=SPI_BUFFER_SIZE << 4;
         t1.tx_buffer=NULL;
         t1.rx_buffer=recvbuf1;
 
-        t2.length=SPI_BUFFER_SIZE << 3;
+        t2.length=SPI_BUFFER_SIZE << 4;
         t2.tx_buffer=NULL;
         t2.rx_buffer=recvbuf2;
         /* This call enables the SPI slave interface to send/receive to the sendbuf and recvbuf1. The transaction is
@@ -90,13 +132,16 @@ void spi_read(void * pvParameter)
         data.
         */
         ret=spi_slave_transmit(HSPI_HOST, &t1, portMAX_DELAY);
-        assert(ret==ESP_OK);
         ret=spi_slave_transmit(VSPI_HOST, &t2, portMAX_DELAY);
-        assert(ret==ESP_OK);
 
         //spi_slave_transmit does not return until the master has done a transmission, so by here we have sent our data and
         //received data from the master. Print it.
-        printf("Received: %08x %08x\n", *recvbuf1, *recvbuf2);
+        bool changed = is_changed(recvbuf1, recvbuf2);
+        if(changed){
+            combine(recvbuf1, recvbuf2);
+            memcpy(xSPIMessage.raw, spi_packet, SPI_BUFFER_SIZE * 2 * sizeof(uint8_t));
+            pxMessage = & xSPIMessage;
+            xQueueSend(xSPIQueue, (void *) &pxMessage, (TickType_t) 0);
+        }
     }
-
 }

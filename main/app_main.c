@@ -32,7 +32,7 @@
 #include "esp_spi_flash.h"
 
 #include "spi_read.h"
-
+#include "process_spi_data.h"
 
 /*
 SPI receiver (slave) example.
@@ -52,6 +52,7 @@ Pins in use. The SPI Master can use the GPIO mux, so feel free to change these i
 
 void app_main(){
     xTaskCreate(&spi_read, "SPI Read", 2048, NULL, 5, NULL);
+    xTaskCreate(&processSpiMessageTask, "SPI Parse", 2048, NULL, 5, NULL);
 }
 
 
