@@ -47,7 +47,21 @@ void app_main(void){
 
         Queue * queue = new Queue( 10, sizeof( SPIMessage));
 
-        xTaskCreate(&spi_read, "SPI Read", 2048, queue, 5, NULL);
-        xTaskCreate(&processSpiMessageTask, "SPI Parse", 2048, queue, 5, NULL);
-        // xTaskCreate(&processSerialMessagesTask, "Serial Reader", 2048, NULL, 5, NULL);
-}
+        xTaskCreatePinnedToCore(
+                    &spi_read,   /* Function to implement the task */
+                    "SPI Reader", /* Name of the task */
+                    2048,      /* Stack size in words */
+                    queue,       /* Task input parameter */
+                    0,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    0);  /* Core where the task should run */
+
+        xTaskCreatePinnedToCore(
+                    &processSpiMessageTask,   /* Function to implement the task */
+                    "SPI Parse", /* Name of the task */
+                    2048,      /* Stack size in words */
+                    queue,       /* Task input parameter */
+                    5,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    1);  /* Core where the task should run */
+ }
