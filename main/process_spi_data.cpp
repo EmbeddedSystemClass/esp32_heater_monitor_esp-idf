@@ -3,34 +3,21 @@
 #include "spi_message.h"
 #include "queue.hpp"
 using namespace cpp_freertos;
+#include <algorithm>
 #include <vector>
+#include <iterator>
 
+using namespace std;
 
-// uint8_t spi_packet[16];
-// memset(spi_packet, 0, 16);
-
-
-// bool is_changed(uint8_t array1[], uint8_t array2[]){
-//     for (int i = 0; i<8; i++){
-//         if(spi_packet[i] != array1[i] && spi_packet[i+8] != array2[i]){
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-// void combine(uint8_t array1[], uint8_t array2[]){
-//     for(int i = 0; i<8; i++){
-//         spi_packet[i] = array1[i];
-//         spi_packet[i+8] = array2[i];
-//     }
-// }
+vector<uint8_t> current;
+vector<uint8_t> last;
 
 void processSpiMessageTask(void * queuePtr){
     Queue * queue = (Queue *) queuePtr; //casts the void* mess to a queue since we pass it through
     uint32_t count = 0;
     printf("SPI Message Processor UP and RUNNING.\n");
     struct SPIMessage * pxRxedMessage = new SPIMessage();
+
     while(1){
 
         if( queue->NumItems() > 0 )
@@ -39,18 +26,26 @@ void processSpiMessageTask(void * queuePtr){
             // message is not immediately available.
             if( queue->Dequeue((SPIMessage*) pxRxedMessage, (TickType_t) 10))
             {
+                current.clear();
+                copy(&pxRxedMessage->part_1[0], &pxRxedMessage->part_1[7], back_inserter(current));
+                copy(&pxRxedMessage->part_2[0], &pxRxedMessage->part_2[7], back_inserter(current));
 
-                count++;
+
+                if(current != last){
+                    last.clear();
+                    count++;
+                    last = current;
+
+                    printf("Received[%u]: ", count);
+                    for(auto& element : last) {
+                        printf("0x%02x ", element);
+                    }
+                    printf("\n");
+                }
+
                 // pcRxedMessage now points to the struct AMessage variable posted
                 // by vATask.
-                printf("Received[%u]: ", count);
-                for(int i = 0; i< 8; i++){
-                    printf("%02x ", pxRxedMessage->part_1[i]);
-                }
-                for(int i = 0; i< 8; i++){
-                    printf("%02x ", pxRxedMessage->part_2[i]);
-                }
-                printf("\n");
+
             }
         }
     }
