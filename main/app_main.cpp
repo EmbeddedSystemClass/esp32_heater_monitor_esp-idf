@@ -61,7 +61,7 @@ void app_main(void){
                     "SPI Parse", /* Name of the task */
                     2048,      /* Stack size in words */
                     queue,       /* Task input parameter */
-                    5,          /* Priority of the task */
+                    0,          /* Priority of the task */
                     NULL,       /* Task handle. */
                     1);  /* Core where the task should run */
  }
