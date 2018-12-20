@@ -1,0 +1,1 @@
+void processSerialMessagesTask(void *pvParameters);

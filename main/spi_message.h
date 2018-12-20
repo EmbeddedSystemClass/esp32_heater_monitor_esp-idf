@@ -1,10 +1,7 @@
 #include <stdint.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
 
-struct SPIMessage
+typedef struct SPIMessage
 {
-    uint8_t raw[16];
+    uint8_t part_1[8];
+    uint8_t part_2[8];
 } xSPIMessage;
-
-QueueHandle_t xSPIQueue;

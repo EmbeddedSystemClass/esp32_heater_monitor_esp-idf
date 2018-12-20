@@ -11,7 +11,7 @@ class SlaveSPI {
         spi_slave_transaction_t * transaction;
         spi_host_device_t bus;
     public:
+    	~SlaveSPI();
         void init(uint8_t mosi, uint8_t sck, uint8_t cs, spi_host_device_t spi_device);
         void read(uint8_t[], int size);
-	~SlaveSPI();
 };
