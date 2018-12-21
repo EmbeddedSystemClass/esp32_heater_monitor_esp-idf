@@ -35,6 +35,7 @@
 #include "process_spi_data.h"
 
 #include "spi_message.h"
+#include "state_struct.h"
 #include "queue_struct.h"
 
 extern "C" {
@@ -45,7 +46,7 @@ void app_main(void){
 
         queues_t * queues = new queues_t; // need a ptr to pass to the tasks for intra-task communication
         queues->spi_messages = new Queue( 10, sizeof( SPIMessage));
-        // queues->desired_state = new Queue( 10, sizeof( uint8_t));
+        queues->current_state = new Queue( 10, sizeof( heater_state_t));
 
         xTaskCreatePinnedToCore(
                     &spi_read,   /* Function to implement the task */
@@ -54,7 +55,7 @@ void app_main(void){
                     queues,       /* Task input parameter */
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
-                    0);  /* Core where the task should run */
+                    tskNO_AFFINITY);  /* Core where the task should run */
 
         xTaskCreatePinnedToCore(
                     &processSpiMessageTask,   /* Function to implement the task */
@@ -63,5 +64,5 @@ void app_main(void){
                     queues,       /* Task input parameter */
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
-                    1);  /* Core where the task should run */
+                    tskNO_AFFINITY);  /* Core where the task should run */
  }

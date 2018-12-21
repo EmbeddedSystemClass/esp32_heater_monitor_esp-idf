@@ -2,9 +2,11 @@
 #include "spi_message_structs.h"
 
 #include "queue_struct.h"
+#include "state_struct.h"
 
 #include "spi_message.h"
 
+#include <stdlib.h>
 #include <algorithm>
 #include <vector>
 #include <deque>
@@ -43,12 +45,15 @@ bool digit_lookup(uint8_t message[16], uint8_t & value){
 }
 
 void processSpiMessageTask(void * queuePtr){
-    struct queues_t * queues = (queues_t*) queuePtr;//casts the void* mess to a queue since we pass it through
+    struct queues_t * queues = (queues_t*) queuePtr; //casts the void* mess to a queue since we pass it through
 
     Queue * spi_message_queue = queues->spi_messages;
-    uint32_t count = 0;
+    Queue * state_queue = queues->current_state;
+
     printf("SPI Message Processor UP and RUNNING.\n");
+
     struct SPIMessage * pxRxedMessage = new SPIMessage();
+    struct heater_state_t * state = new heater_state_t();
 
     uint8_t lcd_digits;
 
@@ -65,8 +70,6 @@ void processSpiMessageTask(void * queuePtr){
     uint8_t hold_set_mode_count=0;
 
     while(1){
-
-
         if( spi_message_queue->NumItems() > 0 )
         {
             // Receive a message on the created queue.  Block for 10 ticks if a
@@ -128,7 +131,12 @@ void processSpiMessageTask(void * queuePtr){
                             }
                         }
 
-                        printf("ThermostatTemp: %d HoldSet: %s Hold: %s ", thermostat_temperature, hold_set_mode ? "true":"false", hold_mode ? "true":"false");
+                        printf("ThermostatTemp: %d HoldSet: %s Hold: %s ",
+                            thermostat_temperature,
+                            hold_set_mode ? "true":"false",
+                            hold_mode ? "true":"false"
+                        );
+
 
                         // count++;
 
@@ -141,6 +149,19 @@ void processSpiMessageTask(void * queuePtr){
                 } else {
                     hold_set_mode = false;
                 }
+
+                //only enqueue if state has changed:
+                if(state->thermostat_setpoint != thermostat_temperature
+                 ||state->set_hold_mode != hold_set_mode
+                 ||state->hold_mode != hold_mode){
+                    state->thermostat_setpoint=thermostat_temperature;
+                    state->set_hold_mode = hold_set_mode;
+                    state->hold_mode = hold_mode;
+
+                    state_queue->Enqueue((void *) state);
+                }
+
+
             }
         }
     }

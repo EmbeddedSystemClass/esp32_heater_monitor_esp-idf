@@ -47,6 +47,8 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "memory": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "string": "cpp",
+        "stdint.h": "c"
     }
 }
