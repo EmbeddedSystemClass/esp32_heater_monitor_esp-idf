@@ -35,9 +35,7 @@
 #include "process_spi_data.h"
 
 #include "spi_message.h"
-#include "queue.hpp"
-using namespace cpp_freertos;
-
+#include "queue_struct.h"
 
 extern "C" {
 	void app_main(void);
@@ -45,13 +43,15 @@ extern "C" {
 
 void app_main(void){
 
-        Queue * queue = new Queue( 10, sizeof( SPIMessage));
+        queues_t * queues = new queues_t; // need a ptr to pass to the tasks for intra-task communication
+        queues->spi_messages = new Queue( 10, sizeof( SPIMessage));
+        // queues->desired_state = new Queue( 10, sizeof( uint8_t));
 
         xTaskCreatePinnedToCore(
                     &spi_read,   /* Function to implement the task */
                     "SPI Reader", /* Name of the task */
                     2048,      /* Stack size in words */
-                    queue,       /* Task input parameter */
+                    queues,       /* Task input parameter */
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
                     0);  /* Core where the task should run */
@@ -60,7 +60,7 @@ void app_main(void){
                     &processSpiMessageTask,   /* Function to implement the task */
                     "SPI Parse", /* Name of the task */
                     2048,      /* Stack size in words */
-                    queue,       /* Task input parameter */
+                    queues,       /* Task input parameter */
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
                     1);  /* Core where the task should run */

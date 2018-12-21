@@ -1,9 +1,10 @@
 #include "process_spi_data.h"
 #include "spi_message_structs.h"
 
+#include "queue_struct.h"
+
 #include "spi_message.h"
-#include "queue.hpp"
-using namespace cpp_freertos;
+
 #include <algorithm>
 #include <vector>
 #include <deque>
@@ -42,7 +43,9 @@ bool digit_lookup(uint8_t message[16], uint8_t & value){
 }
 
 void processSpiMessageTask(void * queuePtr){
-    Queue * queue = (Queue *) queuePtr; //casts the void* mess to a queue since we pass it through
+    struct queues_t * queues = (queues_t*) queuePtr;//casts the void* mess to a queue since we pass it through
+
+    Queue * spi_message_queue = queues->spi_messages;
     uint32_t count = 0;
     printf("SPI Message Processor UP and RUNNING.\n");
     struct SPIMessage * pxRxedMessage = new SPIMessage();
@@ -64,11 +67,11 @@ void processSpiMessageTask(void * queuePtr){
     while(1){
 
 
-        if( queue->NumItems() > 0 )
+        if( spi_message_queue->NumItems() > 0 )
         {
             // Receive a message on the created queue.  Block for 10 ticks if a
             // message is not immediately available.
-            if( queue->Dequeue((SPIMessage*) pxRxedMessage, (TickType_t) 10))
+            if( spi_message_queue->Dequeue((SPIMessage*) pxRxedMessage, (TickType_t) 10))
             {
                 current.clear();
                 copy(&pxRxedMessage->part_1[0], &pxRxedMessage->part_1[8], back_inserter(current));
