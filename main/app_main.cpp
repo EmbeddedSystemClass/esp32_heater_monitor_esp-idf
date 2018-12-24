@@ -35,7 +35,10 @@
 #include "spi_read.h"
 #include "process_spi_data.h"
 #include "state_manager.h"
-#include "power_status.h"
+#include "mqtt_task.h"
+extern "C"{
+        #include "power_worker.h"
+}
 
 #include "spi_message.h"
 #include "state_struct.h"
@@ -78,12 +81,6 @@ void app_main(void){
         //configure GPIO with the given settings
         gpio_config(io_conf);
 
-        io_conf->mode = GPIO_MODE_INPUT;
-        io_conf->pin_bit_mask = GPIO_INPUT_PIN_SEL;
-        io_conf->pull_up_en = (gpio_pullup_t) 1;
-
-        gpio_config(io_conf);
-
         gpio_set_level((gpio_num_t)POWER_KEY, 1);
         gpio_set_level((gpio_num_t)UP_KEY, 1);
         gpio_set_level((gpio_num_t)DOWN_KEY, 1);
@@ -93,7 +90,7 @@ void app_main(void){
                     &powerStatus,   /* Function to implement the task */
                     "Power Status Reader", /* Name of the task */
                     2048,      /* Stack size in words */
-                    queues,       /* Task input parameter */
+                    queues->power,       /* Task input parameter */
                     0,          /* Priority of the task */
                     NULL,       /* Task handle. */
                     tskNO_AFFINITY);  /* Core where the task should run */
@@ -119,6 +116,14 @@ void app_main(void){
         xTaskCreatePinnedToCore(
                     &manageState,   /* Function to implement the task */
                     "State Manager", /* Name of the task */
+                    2048,      /* Stack size in words */
+                    queues,       /* Task input parameter */
+                    0,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    tskNO_AFFINITY);  /* Core where the task should run */
+        xTaskCreatePinnedToCore(
+                    &mqttTask,   /* Function to implement the task */
+                    "MQTT Manager", /* Name of the task */
                     2048,      /* Stack size in words */
                     queues,       /* Task input parameter */
                     0,          /* Priority of the task */
