@@ -56,6 +56,12 @@ void app_main(void){
         queues_t * queues = new queues_t; // need a ptr to pass to the tasks for intra-task communication
         queues->spi_messages = new Queue( 10, sizeof( SPIMessage));
         queues->current_state = new Queue( 10, sizeof( heater_state_t));
+        queues->desired_state = new Queue( 10, sizeof( heater_state_t));
+
+        heater_state_t * first_desired_state = new heater_state_t();
+        first_desired_state->hold_mode = true;
+        first_desired_state->thermostat_setpoint = 75;
+        queues->desired_state->Enqueue((void *) first_desired_state); //queue up a default state
 
         gpio_config_t * io_conf = new gpio_config_t();
 
@@ -73,6 +79,7 @@ void app_main(void){
 
         io_conf->mode = GPIO_MODE_INPUT;
         io_conf->pin_bit_mask = GPIO_INPUT_PIN_SEL;
+        io_conf->pull_up_en = (gpio_pullup_t) 1;
 
         gpio_config(io_conf);
 
