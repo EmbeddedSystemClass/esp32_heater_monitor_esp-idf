@@ -1,0 +1,1 @@
+void manageState(void * messages);

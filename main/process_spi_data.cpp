@@ -125,26 +125,10 @@ void processSpiMessageTask(void * queuePtr){
                         //if we have some lcd value to report, lets fetch that and print it.
 
                         if(digit_lookup(current.data(), lcd_digits)){
-                            printf("LCD Digits: %d ", lcd_digits);
                             if (hold_set_mode){ // when we are in hold-set mode, the thermostat's temp is displayed
                                 thermostat_temperature = lcd_digits;
                             }
                         }
-
-                        printf("ThermostatTemp: %d HoldSet: %s Hold: %s ",
-                            thermostat_temperature,
-                            hold_set_mode ? "true":"false",
-                            hold_mode ? "true":"false"
-                        );
-
-
-                        // count++;
-
-                        // printf("Received[%u]: ", count);
-                        // for(auto& element : last) {
-                        //     printf("0x%02x ", element);
-                        // }
-                        printf("\n");
                     }
                 } else {
                     hold_set_mode = false;
@@ -153,15 +137,14 @@ void processSpiMessageTask(void * queuePtr){
                 //only enqueue if state has changed:
                 if(state->thermostat_setpoint != thermostat_temperature
                  ||state->set_hold_mode != hold_set_mode
-                 ||state->hold_mode != hold_mode){
+                 ||state->hold_mode != hold_mode
+                 ||state->idle != idle_mode){
                     state->thermostat_setpoint=thermostat_temperature;
                     state->set_hold_mode = hold_set_mode;
                     state->hold_mode = hold_mode;
-
+                    state->idle = idle_mode;
                     state_queue->Enqueue((void *) state);
                 }
-
-
             }
         }
     }
