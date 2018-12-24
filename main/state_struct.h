@@ -5,4 +5,5 @@ typedef struct heater_state_t {
     bool set_hold_mode;
     bool hold_mode;
     bool idle;
+    bool power; // currently only used for desired state
 } heater_state_t;

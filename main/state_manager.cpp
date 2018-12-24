@@ -6,8 +6,6 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
-
-
 void press_button(int button){
     gpio_set_level((gpio_num_t) button, 0);
     vTaskDelay(450 / portTICK_RATE_MS); //wait 500ms
@@ -15,9 +13,11 @@ void press_button(int button){
     vTaskDelay(500 / portTICK_RATE_MS);
 }
 
-void set_hold_mode(){
-    press_button(POWER_KEY);
-    vTaskDelay(500 / portTICK_RATE_MS);
+void set_hold_mode(bool currentPower){
+    if(currentPower){
+        press_button(POWER_KEY);
+        vTaskDelay(500 / portTICK_RATE_MS);
+    }
     press_button(POWER_KEY);
     vTaskDelay(500 / portTICK_RATE_MS);
     press_button(MODE_KEY);
@@ -39,6 +39,8 @@ void manageState(void * queuePtr){
     struct queues_t * queues = (queues_t*) queuePtr; //casts the void* mess to a queue since we pass it through
     Queue * state_queue = queues->current_state;
     Queue * desired_queue = queues->desired_state;
+    bool * powerPrt = queues->power;
+    bool power = powerPrt;
 
     struct heater_state_t * desiredState = new heater_state_t();
     struct heater_state_t * currentState = new heater_state_t();
@@ -62,6 +64,13 @@ void manageState(void * queuePtr){
                 desired_queue->Dequeue((heater_state_t*) desiredState, (TickType_t) 10);
             }
 
+            if(!desiredState->power){
+                while(power){ //power is managed externally
+                    press_button(POWER_KEY);
+                }
+                continue; //don't apply the rest of the state...
+            }
+
             if (currentState->set_hold_mode == false && currentState->hold_mode == true){
                 //if we are in hold mode, theres a chance we are also in set mode.
                 //The set bool requires 2 OR 3 of the last 5 messages on the bus contain
@@ -72,7 +81,7 @@ void manageState(void * queuePtr){
 
             while(desiredState->hold_mode != currentState->hold_mode){
                 printf("setting HOLD mode\n");
-                set_hold_mode();
+                set_hold_mode(power);
                 while(!state_queue->IsEmpty()){
                     state_queue->Dequeue((heater_state_t*) currentState, 200 / portTICK_RATE_MS);
                 }

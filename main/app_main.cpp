@@ -61,6 +61,7 @@ void app_main(void){
         heater_state_t * first_desired_state = new heater_state_t();
         first_desired_state->hold_mode = true;
         first_desired_state->thermostat_setpoint = 75;
+        first_desired_state->power = true;
         queues->desired_state->Enqueue((void *) first_desired_state); //queue up a default state
 
         gpio_config_t * io_conf = new gpio_config_t();

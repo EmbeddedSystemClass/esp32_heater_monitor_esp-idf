@@ -7,5 +7,5 @@
 #define DOWN_KEY 14 // Yellow  19A  5r
 #define MODE_KEY 23 // Red  -  18A  15l
 #define POWER_KEY 13 //Orange- 19G  r3
-#define POWER_LED_1 21// Grey -  25B //on
-#define POWER_LED_2 19//White -  26B //off
+#define POWER_LED_1 21 // Grey -  25B //on
+#define POWER_LED_2 19 //White -  26B //off
